@@ -69,6 +69,10 @@ Mode::Mode(const Anope::string &mname, ModeClass mcl, char mch, ModeType mt) : n
 {
 }
 
+Mode::Mode(const Anope::string &mname, ModeClass mcl, ModeType mt) : name(mname), mclass(mcl), type(mt)
+{
+}
+
 Mode::~Mode()
 {
 }
@@ -90,6 +94,10 @@ ChannelMode::ChannelMode(const Anope::string &cm, char mch) : Mode(cm, MC_CHANNE
 {
 }
 
+ChannelMode::ChannelMode(const Anope::string &cm) : Mode(cm, MC_CHANNEL, MODE_REGULAR)
+{
+}
+
 ChannelMode::~ChannelMode()
 {
 }
@@ -106,11 +114,21 @@ ChannelModeList::ChannelModeList(const Anope::string &cm, char mch) : ChannelMod
 	this->type = MODE_LIST;
 }
 
+ChannelModeList::ChannelModeList(const Anope::string &cm) : ChannelMode(cm)
+{
+	this->type = MODE_LIST;
+}
+
 ChannelModeList::~ChannelModeList()
 {
 }
 
 ChannelModeParam::ChannelModeParam(const Anope::string &cm, char mch, bool ma) : ChannelMode(cm, mch), minus_no_arg(ma)
+{
+	this->type = MODE_PARAM;
+}
+
+ChannelModeParam::ChannelModeParam(const Anope::string &cm, bool ma) : ChannelMode(cm), minus_no_arg(ma)
 {
 	this->type = MODE_PARAM;
 }

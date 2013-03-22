@@ -55,6 +55,14 @@ class CoreExport Mode : public Base
 	 * @param type The mode type
 	 */
 	Mode(const Anope::string &mname, ModeClass mclass, char mc, ModeType type);
+
+	/** Constructor without a mode letter
+	 * @param mname The mode name
+	 * @param mclass The type of mode this is
+	 * @param type The mode type
+	 */
+	Mode(const Anope::string &mname, ModeClass mclass, ModeType type);
+
 	virtual ~Mode();
 };
 
@@ -97,6 +105,12 @@ class CoreExport ChannelMode : public Mode
 	 * @param mc The mode char
 	 */
 	ChannelMode(const Anope::string &name, char mc);
+
+	/** Constructor without a mode letter
+	 * @param name The mode name
+	 */
+	ChannelMode(const Anope::string &name);
+
 	virtual ~ChannelMode();
 
 	/** Can a user set this mode, used for mlock
@@ -124,6 +138,11 @@ class CoreExport ChannelModeList : public ChannelMode
 	 * @param mc The mode char
 	 */
 	ChannelModeList(const Anope::string &name, char mc);
+
+	/** Constructor without a mode letter
+	 * @param name The mode name
+	 */
+	ChannelModeList(const Anope::string &name);
 
 	/** destructor
 	 */
@@ -167,6 +186,12 @@ class CoreExport ChannelModeParam : public ChannelMode
 	 * @param minus_no_arg true if this mode sends no arg when unsetting
 	 */
 	ChannelModeParam(const Anope::string &name, char mc, bool minus_no_arg = false);
+
+	/** Constructor without a mode letter
+	 * @param name The mode name
+	 * @param minus_no_arg true if this mode sends no arg when unsetting
+	 */
+	ChannelModeParam(const Anope::string &name, bool minus_no_arg = false);
 
 	/** destructor
 	 */
