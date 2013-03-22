@@ -321,6 +321,8 @@ void Channel::SetModeInternal(MessageSource &setter, ChannelMode *cm, const Anop
 	if (!cm)
 		return;
 
+	cm = cm->GetRealMode(param);
+
 	EventReturn MOD_RESULT;
 
 	/* Setting v/h/o/a/q etc */
@@ -392,6 +394,8 @@ void Channel::RemoveModeInternal(MessageSource &setter, ChannelMode *cm, const A
 {
 	if (!cm)
 		return;
+
+	cm = cm->GetRealMode(param);
 
 	EventReturn MOD_RESULT;
 
@@ -482,6 +486,9 @@ void Channel::SetMode(BotInfo *bi, ChannelMode *cm, const Anope::string &param, 
 {
 	if (!cm)
 		return;
+
+	cm = cm->GetRealMode(param);
+
 	/* Don't set modes already set */
 	if (cm->type == MODE_REGULAR && HasMode(cm->name))
 		return;

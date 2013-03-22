@@ -104,6 +104,13 @@ class CoreExport ChannelMode : public Mode
 	 * @param u The user, or NULL
 	 */
 	virtual bool CanSet(User *u) const;
+
+	/** doc
+	 */
+	virtual ChannelMode* GetRealMode(Anope::string &param)
+	{
+		return this;
+	}
 };
 
 
