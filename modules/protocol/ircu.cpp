@@ -622,7 +622,7 @@ struct IRCDMessageNick : IRCDMessage
 
 struct IRCDMessageBurst : IRCDMessage
 {
-	IRCDMessageBurst(Module *creator) : IRCDMessage(creator, "B", 3) { SetFlag(IRCDMESSAGE_SOFT_LIMIT); }
+	IRCDMessageBurst(Module *creator) : IRCDMessage(creator, "B", 2) { SetFlag(IRCDMESSAGE_SOFT_LIMIT); }
 
 	int HealCModes(Anope::string &modes, const std::vector<Anope::string> &params, int param)
 	{
