@@ -196,7 +196,6 @@ public:
 	/*** END OF IRCU CODE ***/
 
 	bool use_oplevels;
-	Anope::string cloak_suffix;
 
 	IRCuProto(Module *creator) : IRCDProto(creator, "IRCu 2.10.12+")
 	{
@@ -398,8 +397,6 @@ public:
 	void SendLogin(User *u, NickAlias *na) anope_override
 	{
 		UplinkSocket::Message(Me) << "AC " << u->GetUID() << " " << na->nc->display;
-		if (u->HasMode("CLOAK"))
-			u->SetCloakedHost(na->nc->display + "." + cloak_suffix);
 	}
 
 	void SendLogout(User *u) anope_override
@@ -1089,6 +1086,7 @@ class ProtoIRCu : public Module
 	}
 
 public:
+	Anope::string cloak_suffix;
 	bool use_zannels;
 
 	ProtoIRCu(const Anope::string &modname, const Anope::string &creator) : Module(modname, creator, PROTOCOL | VENDOR),
@@ -1209,8 +1207,8 @@ public:
 	{
 		use_zannels = conf->GetModule(this)->Get<bool>("use_zannels", "yes");
 		ircd_proto.use_oplevels = conf->GetModule(this)->Get<bool>("use_oplevels", "yes");
-		ircd_proto.cloak_suffix = conf->GetModule(this)->Get<const Anope::string>("cloak_suffix");
-		if (ircd_proto.cloak_suffix.empty())
+		cloak_suffix = conf->GetModule(this)->Get<const Anope::string>("cloak_suffix");
+		if (cloak_suffix.empty())
 			throw ConfigException(this->name + " cloak_suffix must not be empty.");
 	}
 
@@ -1222,7 +1220,17 @@ public:
 		if (mname != "CLOAK" || u->Account() == NULL)
 			return;
 
-		u->SetCloakedHost(u->Account()->display + "." + ircd_proto.cloak_suffix);
+		u->SetCloakedHost(u->Account()->display + "." + cloak_suffix);
+	}
+
+	void OnUserLogin(User *u) anope_override
+	{
+		/* User::User first processes user modes, which doesn't parse +r containing the
+		 * account name, and only THEN logs in. This is necessary to keep track of the
+		 * cloak on-burst.
+		 */
+		if (u->HasMode("CLOAK"))
+			u->SetCloakedHost(u->Account()->display + "." + cloak_suffix);
 	}
 };
 
