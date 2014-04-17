@@ -960,6 +960,44 @@ struct IRCDMessageEndOfBurst : IRCDMessage
 	}
 };
 
+struct IRCDMessageMode : IRCDMessage
+{
+	IRCDMessageMode(Module *creator) : IRCDMessage(creator, "M", 2) { SetFlag(IRCDMESSAGE_SOFT_LIMIT); }
+
+	void Run(MessageSource &source, const std::vector<Anope::string> &params) anope_override
+	{
+		if (IRCD->IsChannelValid(params[0]))
+		{
+			Channel *c;
+
+			if ((c = Channel::Find(params[0])) == NULL)
+				return;
+
+			/* A timestamp could be sent as the last argument, but
+			 * we don't really care; the uplink will have figured
+			 * conflicts out for us already.
+			 */
+			Anope::string arg;
+			for (size_t i = 1; i < params.size(); i++)
+			{
+				arg += params[i];
+				if (i != params.size() - 1)
+					arg += " ";
+			}
+			c->SetModesInternal(source, arg, 0);
+		}
+		else
+		{
+			User *u;
+
+			if ((u = User::Find(params[0])) == NULL)
+				return;
+
+			u->SetModesInternal(source, "%s", params[1].c_str());
+		}
+	}
+};
+
 class ProtoIRCu : public Module
 {
 	IRCuProto ircd_proto;
@@ -989,14 +1027,19 @@ class ProtoIRCu : public Module
 	IRCDMessageClearModes message_clearmodes;
 	IRCDMessageCreate message_create;
 	IRCDMessageEndOfBurst message_end_of_burst;
+	IRCDMessageMode message_mode;
 
 	/* Non-token message handlers */
 	ServiceAlias alias_server, alias_nick, alias_burst, alias_whois,
 		     alias_clearmodes, alias_create, alias_end_of_burst,
+		     alias_mode,
 
 		     alias_a, alias_y, alias_i, alias_j, alias_d, alias_mo,
 		     alias_o, alias_l, alias_g, alias_p, alias_q, alias_r,
-		     alias_ti, alias_t, alias_v;
+		     alias_ti, alias_t, alias_v,
+		     
+		     /* true aliases */
+		     alias_om;
 
 	void AddModes()
 	{
@@ -1071,6 +1114,7 @@ public:
 		message_clearmodes(this),
 		message_create(this),
 		message_end_of_burst(this),
+		message_mode(this),
 
 #define ALIAS(name, token) alias_##name("IRCDMessage", "ircu/" #name, "ircu/" #token)
 		ALIAS(server, s),
@@ -1080,6 +1124,8 @@ public:
 		ALIAS(clearmodes, cm),
 		ALIAS(create, c),
 		ALIAS(end_of_burst, eb),
+		ALIAS(mode, m),
+		ALIAS(opmode, m),
 
 		ALIAS(a, away),
 		ALIAS(y, error),
@@ -1095,7 +1141,9 @@ public:
 		ALIAS(r, stats),
 		ALIAS(ti, time),
 		ALIAS(t, topic),
-		ALIAS(v, version)
+		ALIAS(v, version),
+
+		ALIAS(om, m)
 #undef ALIAS
 	{
 		if (Config->GetModule(this))
