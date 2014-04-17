@@ -21,7 +21,7 @@
 
 Serialize::Checker<botinfo_map> BotListByNick("BotInfo"), BotListByUID("BotInfo");
 
-BotInfo::BotInfo(const Anope::string &nnick, const Anope::string &nuser, const Anope::string &nhost, const Anope::string &nreal, const Anope::string &bmodes) : User(nnick, nuser, nhost, "", "", Me, nreal, Anope::CurTime, "", Servers::TS6_UID_Retrieve(), NULL), Serializable("BotInfo"), channels("ChannelInfo"), botmodes(bmodes)
+BotInfo::BotInfo(const Anope::string &nnick, const Anope::string &nuser, const Anope::string &nhost, const Anope::string &nreal, const Anope::string &bmodes) : User(nnick, nuser, nhost, "", "", Me, nreal, Anope::CurTime, "", IRCD ? IRCD->UID_Retrieve() : "", NULL), Serializable("BotInfo"), channels("ChannelInfo"), botmodes(bmodes)
 {
 	this->lastmsg = this->created = Anope::CurTime;
 	this->introduced = false;
@@ -117,7 +117,7 @@ void BotInfo::GenerateUID()
 		UserListByUID.erase(this->uid);
 	}
 
-	this->uid = Servers::TS6_UID_Retrieve();
+	this->uid = IRCD->UID_Retrieve();
 	(*BotListByUID)[this->uid] = this;
 	UserListByUID[this->uid] = this;
 }
@@ -248,13 +248,14 @@ CommandInfo *BotInfo::GetCommand(const Anope::string &cname)
 BotInfo* BotInfo::Find(const Anope::string &nick, bool nick_only)
 {
 	BotInfo *bi = NULL;
-	if (!nick_only && isdigit(nick[0]) && IRCD->RequiresID)
+	if (!nick_only && IRCD != NULL && IRCD->RequiresID)
 	{
 		botinfo_map::iterator it = BotListByUID->find(nick);
 		if (it != BotListByUID->end())
 			bi = it->second;
 	}
-	else
+
+	if (bi == NULL)
 	{
 		botinfo_map::iterator it = BotListByNick->find(nick);
 		if (it != BotListByNick->end())

@@ -197,8 +197,8 @@ UplinkSocket::Message::~Message()
 
 	if (!message_source.empty())
 	{
-		UplinkSock->Write(":" + message_source + " " + this->buffer.str());
-		Log(LOG_RAWIO) << "Sent: :" << message_source << " " << this->buffer.str();
+		UplinkSock->Write(/*":" + */message_source + " " + this->buffer.str());
+		Log(LOG_RAWIO) << "Sent: " << message_source << " " << this->buffer.str();
 	}
 	else
 	{

@@ -814,7 +814,7 @@ bool User::BadPassword()
 
 User* User::Find(const Anope::string &name, bool nick_only)
 {
-	if (!nick_only && isdigit(name[0]) && IRCD->RequiresID)
+	if (!nick_only && IRCD->RequiresID)
 	{
 		user_map::iterator it = UserListByUID.find(name);
 		if (it != UserListByUID.end())

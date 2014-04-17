@@ -68,6 +68,12 @@ class CoreExport IRCDProto : public Service
 	unsigned MaxModes;
 	/* The maximum number of bytes a line may have */
 	unsigned MaxLine;
+	/* If true, RFC1459 parsing is used for all lines. */
+	bool RFC1459Lines;
+
+	/* Retrieves the next free UID or SID */
+	virtual Anope::string UID_Retrieve();
+	virtual Anope::string SID_Retrieve();
 
 	/** Sets the server in NOOP mode. If NOOP mode is enabled, no users
 	 * will be able to oper on the server.

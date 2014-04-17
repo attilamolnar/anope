@@ -18,6 +18,8 @@
 
 void Anope::Process(const Anope::string &buffer)
 {
+	static unsigned short lines_processed = 0;
+
 	/* If debugging, log the buffer */
 	Log(LOG_RAWIO) << "Received: " << buffer;
 
@@ -31,6 +33,14 @@ void Anope::Process(const Anope::string &buffer)
 	{
 		buf_sep.GetToken(source);
 		source.erase(0, 1);
+	}
+	else if (!IRCD->RFC1459Lines)
+	{
+		/* P10 hack: The first two lines are always RFC1459 format, without source */
+		if (lines_processed > 1)
+			buf_sep.GetToken(source);
+		else
+			lines_processed++;
 	}
 
 	Anope::string command;
