@@ -1107,6 +1107,27 @@ public:
 		return EVENT_CONTINUE;
 	}
 
+	void OnPartChannel(User *u, Channel *c, const Anope::string &channel, const Anope::string &msg) anope_override
+	{
+		if (c->users.size() > 0)
+			return;
+
+		/* As per channels.c:sub1_from_channel, modes are cleared for zannels, unless
+		 * they have an apass.
+		 */
+		ChannelMode *l = ModeManager::FindChannelModeByName("LIMIT");
+		ChannelMode *i = ModeManager::FindChannelModeByName("INVITE");
+		MessageSource ms = MessageSource(Me);
+
+		if (l != NULL)
+			c->RemoveModeInternal(ms, l, "", false);
+		if (i != NULL)
+			c->RemoveModeInternal(ms, i, "", false);
+
+		if (!c->HasMode("APASS"))
+			c->Reset();
+	}
+
 	EventReturn OnCheckDelete(Channel *c) anope_override
 	{
 		/* Background: ircu introduced zannels to keep the pseudo-registration that is

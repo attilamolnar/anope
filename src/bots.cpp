@@ -214,9 +214,9 @@ void BotInfo::Part(Channel *c, const Anope::string &reason)
 
 	IRCD->SendPart(this, c, "%s", !reason.empty() ? reason.c_str() : "");
 
-	FOREACH_MOD(OnPartChannel, (this, c, c->name, reason));
-
 	c->DeleteUser(this);
+
+	FOREACH_MOD(OnPartChannel, (this, c, c->name, reason));
 }
 
 void BotInfo::OnMessage(User *u, const Anope::string &message)
