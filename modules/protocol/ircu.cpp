@@ -75,8 +75,6 @@ public:
 		return sa.addr();
 	}
 
-	/*** END OF IRCU CODE ***/
-
 	bool use_oplevels;
 
 	IRCuProto(Module *creator) : IRCDProto(creator, "IRCu 2.10.12+")
@@ -93,7 +91,7 @@ public:
 	}
 
 
-	static inline char nextID(char &c)
+	static inline char& nextID(char &c)
 	{
 		if (c == 'Z')
 			c = 'a';
@@ -106,7 +104,7 @@ public:
 		return ++c;
 	}
 
-	Anope::string UID_Retrieve()
+	Anope::string UID_Retrieve() anope_override
 	{
 		static Anope::string current_uid = "AAA";
 
@@ -121,7 +119,7 @@ public:
 		return Me->GetSID() + current_uid;
 	}
 
-	Anope::string SID_Retrieve()
+	Anope::string SID_Retrieve() anope_override
 	{
 		static Anope::string current_sid = Config->GetBlock("options")->Get<const Anope::string>("id");
 		if (current_sid.empty())
@@ -463,34 +461,46 @@ struct IRCDMessageNick : IRCDMessage
 	/* ABAAA N cule_ 1397454490 */
 	void Run(MessageSource &source, const std::vector<Anope::string> &params) anope_override
 	{
-		time_t ts = convertTo<time_t>(params[1]);
-		User *u;
+		time_t ts;
+
+		try
+		{
+			ts = convertTo<time_t>(params[1]);
+		}
+		catch (const ConvertException &)
+		{
+			ts = 0;
+		}
 
 		/* nick change, source must be user */
-		if (params.size() == 2 && (u = source.GetUser()) != NULL)
-			u->ChangeNick(params[0], ts);
+		if (params.size() == 2)
+		{
+			User *u = source.GetUser();
+			if (u)
+				u->ChangeNick(params[0], ts);
+		}
 		else if (params.size() >= 8 && source.GetServer() != NULL)
 		{
 			Anope::string umodes;
 			Anope::string accname;
 			Anope::string ip = params[params.size() - 3];
 			NickCore *nc = NULL;
-			/* offset for user mode arg */
-			unsigned short offset = 0;
-			int pos;
 
 			/* umodes are optional! */
 			if (params.size() >= 8)
 				umodes = params[5];
 			if (!umodes.empty() && umodes.find('r') != Anope::string::npos)
 			{
-				accname = params[6 + offset++];
+				accname = params[6];
+
 				/* If it's a timestamped account, truncate. */
-				if ((pos = umodes.find(':')) != Anope::string::npos)
+				size_t pos = umodes.find(':');
+				if (pos != Anope::string::npos)
 					accname = accname.substr(0, pos - 1);
 
 				nc = NickCore::Find(accname);
 			}
+
 			if (ip == '_')
 				ip.clear();
 			else
@@ -507,16 +517,14 @@ struct IRCDMessageBurst : IRCDMessage
 {
 	IRCDMessageBurst(Module *creator) : IRCDMessage(creator, "B", 2) { SetFlag(IRCDMESSAGE_SOFT_LIMIT); }
 
-	int HealCModes(Anope::string &modes, const std::vector<Anope::string> &params, int param)
+	unsigned HealCModes(Anope::string &modes, const std::vector<Anope::string> &params, unsigned param)
 	{
-		int ret = 0;
+		unsigned ret = 0;
 		Anope::string healed_modes = params[param];
 
-		for (Anope::string::const_iterator it = params[param].begin(), end = params[param].end();
-				it != end;
-				++it)
+		for (Anope::string::const_iterator it = params[param].begin(), end = params[param].end(); it != end; ++it)
 		{
-			const ChannelMode *const cm = ModeManager::FindChannelModeByChar(*it);
+			ChannelMode *cm = ModeManager::FindChannelModeByChar(*it);
 			if (cm == NULL)
 				continue;
 
@@ -541,56 +549,29 @@ struct IRCDMessageBurst : IRCDMessage
 	{
 		std::list<Message::Join::SJoinUser> users;
 		commasepstream sep(nicklist);
-		Anope::string nick, cus;
-		size_t pos;
-		ChannelStatus current_mode, base_mode;
 
-		while (sep.GetToken(nick))
+		for (Anope::string nick; sep.GetToken(nick);)
 		{
 			Message::Join::SJoinUser sju;
+			ChannelStatus modes;
 
-			if ((pos = nick.find(':')) != Anope::string::npos)
+			size_t pos = nick.find(':');
+			if (pos != Anope::string::npos)
 			{
 				/* New CUS */
-				cus = nick.substr(pos + 1);
+				Anope::string cus = nick.substr(pos + 1);
 				nick = nick.substr(0, pos);
 
-				int current_mode_needs_reset = 1;
-				for (Anope::string::const_iterator it = cus.begin(), end = cus.end();
-						it != end;
-						++it)
+				for (Anope::string::const_iterator it = cus.begin(), end = cus.end(); it != end; ++it)
 				{
-					if (*it == 'o')
-					{
-						if (current_mode_needs_reset)
-						{
-							current_mode = base_mode;
-							current_mode_needs_reset = 0;
-						}
-						current_mode.AddMode('o');
-					}
+					if (*it == 'o' || isdigit(*it))
+						modes.AddMode('o');
 					else if (*it == 'v')
-					{
-						if (current_mode_needs_reset)
-						{
-							current_mode = base_mode;
-							current_mode_needs_reset = 0;
-						}
-						current_mode.AddMode('v');
-					}
-					else if (isdigit(*it))
-					{
-						if (current_mode_needs_reset)
-						{
-							current_mode = base_mode;
-							current_mode_needs_reset = 0;
-						}
-						current_mode.AddMode('o');
-					}
+						modes.AddMode('v');
 				}
 			}
 
-			sju.first = current_mode;
+			sju.first = modes;
 			sju.second = User::Find(nick);
 			if (sju.second == NULL)
 			{
@@ -608,19 +589,26 @@ struct IRCDMessageBurst : IRCDMessage
 	void Run(MessageSource &source, const std::vector<Anope::string> &params) anope_override
 	{
 		bool created;
-		time_t ts = convertTo<time_t>(params[1]);
+		time_t ts;
 		Channel *c = Channel::FindOrCreate(params[0], created, ts);
 		Anope::string modes;
 		Anope::string buf;
 		std::list<Message::Join::SJoinUser> users;
-		int param;
+
+		try
+		{
+			ts = convertTo<time_t>(params[1]);
+		}
+		catch (const ConvertException &)
+		{
+			ts = 0;
+		}
 
 		/* Skip check if local members are split riding -- ours
 		 * are privileged.
 		 */
 
-		param = 2;
-		while (param < params.size())
+		for (unsigned param = 2; param < params.size(); ++param)
 		{
 			switch (params[param][0])
 			{
@@ -644,19 +632,18 @@ struct IRCDMessageBurst : IRCDMessage
 					break;
 				}
 			}
-			param++;
 		}
 
 		Message::Join::SJoin(source, c->name, ts, modes, users);
 	}
 };
 
-struct IRCDMessageWhois : IRCDMessage
+struct IRCDMessageWhois : Message::Whois
 {
 	/* ircu limits at 50 WHOIS entries. */
 	static const int MAX_WHOIS = 50;
 
-	IRCDMessageWhois(Module *creator) : IRCDMessage(creator, "W", 2) { SetFlag(IRCDMESSAGE_SOFT_LIMIT); }
+	IRCDMessageWhois(Module *creator) : Message::Whois(creator, "W") { }
 
 	/* ABAAA W AS :chanserv */
 	void Run(MessageSource &source, const std::vector<Anope::string> &params) anope_override
@@ -677,49 +664,29 @@ struct IRCDMessageWhois : IRCDMessage
 		 */
 		while (sep.GetToken(nick) && total++ < MAX_WHOIS)
 		{
-			std::vector<Anope::string> waste;
-			waste.push_back(nick);
+			std::vector<Anope::string> p;
+			p.push_back(nick);
 
-			User *u = User::Find(nick, true);
-
-			if (u && u->server == Me)
-			{
-				const BotInfo *bi = BotInfo::Find(u->nick);
-				IRCD->SendNumeric(311, source.GetSource(), "%s %s %s * :%s", u->nick.c_str(), u->GetIdent().c_str(), u->host.c_str(), u->realname.c_str());
-				if (bi)
-					IRCD->SendNumeric(307, source.GetSource(), "%s :is a registered nick", bi->nick.c_str());
-				IRCD->SendNumeric(312, source.GetSource(), "%s %s :%s", u->nick.c_str(), Me->GetName().c_str(), Config->GetBlock("serverinfo")->Get<const Anope::string>("description").c_str());
-				if (bi)
-					IRCD->SendNumeric(317, source.GetSource(), "%s %ld %ld :seconds idle, signon time", bi->nick.c_str(), static_cast<long>(Anope::CurTime - bi->lastmsg), static_cast<long>(bi->signon));
-				IRCD->SendNumeric(318, source.GetSource(), "%s :End of /WHOIS list.", u->nick.c_str());
-			}
-			else
-				IRCD->SendNumeric(401, source.GetSource(), "%s :No such user.", params[0].c_str());
+			Message::Whois::Run(source, p);
 		}
 	}
 };
 
 struct IRCDMessageClearModes : IRCDMessage
 {
-	/* ircu limits at 50 WHOIS entries. */
-	static const int MAX_WHOIS = 50;
-
 	IRCDMessageClearModes(Module *creator) : IRCDMessage(creator, "CM", 2) { }
 
 	/* ABAAA CM #channel :ntk moo */
 	void Run(MessageSource &source, const std::vector<Anope::string> &params) anope_override
 	{
-		Channel *c;
-		ChannelMode *cm;
+		Channel *c = Channel::Find(params[0]);
 
-		if ((c = Channel::Find(params[0])) == NULL)
+		if (c == NULL)
 			return;
 
-		for (Anope::string::const_iterator it = params[1].begin(), end = params[1].end();
-				it != end;
-				++it)
+		for (Anope::string::const_iterator it = params[1].begin(), end = params[1].end(); it != end; ++it)
 		{
-			cm = ModeManager::FindChannelModeByChar(*it);
+			ChannelMode *cm = ModeManager::FindChannelModeByChar(*it);
 			if (cm == NULL)
 				continue;
 
@@ -728,7 +695,7 @@ struct IRCDMessageClearModes : IRCDMessage
 				case MODE_REGULAR:
 				case MODE_PARAM:
 				{
-					c->RemoveModeInternal(source, cm, "", false);
+					c->RemoveModeInternal(source, cm, "", false); // XXX overriding here?
 					break;
 				}
 				case MODE_LIST:
@@ -744,13 +711,10 @@ struct IRCDMessageClearModes : IRCDMessage
 				}
 				case MODE_STATUS:
 				{
-					for (Channel::ChanUserList::const_iterator iit = c->users.begin(), it_end = c->users.end();
-							iit != it_end;)
+					for (Channel::ChanUserList::const_iterator iit = c->users.begin(), it_end = c->users.end(); iit != it_end; ++iit)
 					{
 						ChanUserContainer *uc = iit->second;
-						++iit;
-						if (uc->status.HasMode(*it))
-							c->RemoveModeInternal(source, cm, uc->user->GetUID());
+						c->RemoveModeInternal(source, cm, uc->user->GetUID());
 					}
 					break;
 				}
@@ -768,20 +732,25 @@ struct IRCDMessageCreate : IRCDMessage
 	{
 		/* See m_create.c of ircu for details as to what some of this code does. */
 		User *u = source.GetUser();
-		Channel *c;
-		time_t ts = convertTo<time_t>(params[1]);
-		Anope::string cname;
+		time_t ts;
 		commasepstream sep(params[0]);
-		bool created;
-		bool badop;
-		ChannelStatus cus;
-		std::list<Message::Join::SJoinUser> sjusers;
+		std::list<Message::Join::SJoinUser> sjusers; // XXX is this really correct here?
 
-		while (sep.GetToken(cname))
+		try
 		{
-			badop = false;
-			cus.Clear();
-			c = Channel::FindOrCreate(cname, created, ts);
+			ts = convertTo<time_t>(params[1]);
+		}
+		catch (const ConvertException &)
+		{
+			ts = 0;
+		}
+
+		for (Anope::string cname; sep.GetToken(cname);)
+		{
+			bool badop = false;
+
+			bool created;
+			Channel *c = Channel::FindOrCreate(cname, created, ts);
 
 			if (!created)
 			{
@@ -797,6 +766,7 @@ struct IRCDMessageCreate : IRCDMessage
 				}
 			}
 
+			ChannelStatus cus;
 			if (!badop)
 				cus.AddMode('o');
 
@@ -930,21 +900,15 @@ class ProtoIRCu : public Module
 	void AddModes()
 	{
 		/* Add user modes */
-#define UM_U(name, c) ModeManager::AddUserMode(new UserMode((name), (c)))
-#define UM_O(name, c) ModeManager::AddUserMode(new UserModeOperOnly((name), (c)))
-#define UM_X(name, c) ModeManager::AddUserMode(new UserModeNoone((name), (c)))
-		UM_U("OPER", 'o');
-		UM_U("INVIS", 'i');
-		UM_U("WALLOP", 'w');
-		UM_O("SNOMASK", 's');
-		UM_O("DEAF", 'd');
-		UM_X("PROTECTED", 'k');
-		UM_O("DEBUG", 'g');
-		UM_X("REGISTERED", 'r');
-		UM_U("CLOAK", 'x');
-#undef UM_U
-#undef UM_O
-#undef UM_X
+		ModeManager::AddUserMode(new UserModeOperOnly("DEAF", 'd'));
+		ModeManager::AddUserMode(new UserModeOperOnly("DEBUG", 'g'));
+		ModeManager::AddUserMode(new UserMode("INVIS", 'i'));
+		ModeManager::AddUserMode(new UserModeNoone("PROTECTED", 'k'));
+		ModeManager::AddUserMode(new UserModeOperOnly("OPER", 'o'));
+		ModeManager::AddUserMode(new UserModeNoone("REGISTERED", 'r'));
+		ModeManager::AddUserMode(new UserModeOperOnly("SNOMASK", 's'));
+		ModeManager::AddUserMode(new UserMode("WALLOP", 'w'));
+		ModeManager::AddUserMode(new UserMode("CLOAK", 'x'));
 
 		/* No +eI supported */
 		ModeManager::AddChannelMode(new ChannelModeList("BAN", 'b'));
@@ -1041,17 +1005,21 @@ public:
 	{
 		NickCore *nc = source.GetAccount();
 
-		if ((command->name == "nickserv/identify" && !params.empty() && nc != NULL)
-				|| command->name == "nickserv/logout")
+		if (command->name == "nickserv/identify" && nc)
 		{
-			/* ircu doesn't support changing account name and will
-			 * cry with protocol_violation() if we try. Immediately
-			 * stop any attempt to re-auth.
-			 * The same applies to logging out -- there is no 
-			 * concept of logging out.
-			 */
-			return EVENT_STOP;
+			source.Reply(_("You are already identified."));
+			return EVENT_CONTINUE;
 		}
+
+		/* ircu doesn't support changing account name and will
+		 * cry with protocol_violation() if we try. Immediately
+		 * stop any attempt to re-auth.
+		 * The same applies to logging out -- there is no 
+		 * concept of logging out.
+		 */
+			return EVENT_STOP;
+		if (command->name == "nickserv/logout")
+			return EVENT_STOP;
 
 		return EVENT_CONTINUE;
 	}
