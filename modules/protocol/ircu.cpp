@@ -13,184 +13,66 @@
 class IRCuProto : public IRCDProto
 {
 protected:
-	/* The following parts were stolen from ircu. Never touch a running system. */
-	/*
-	 * IRC - Internet Relay Chat, ircd/channel.c
-	 * Copyright (C) 1996 Carlo Wood (I wish this was C++ - this sucks :/)
-	 *
-	 * This program is free software; you can redistribute it and/or modify
-	 * it under the terms of the GNU General Public License as published by
-	 * the Free Software Foundation; either version 2, or (at your option)
-	 * any later version.
-	 *
-	 * This program is distributed in the hope that it will be useful,
-	 * but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 * GNU General Public License for more details.
-	 *
-	 * You should have received a copy of the GNU General Public License
-	 * along with this program; if not, write to the Free Software
-	 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-	 */
-	static const unsigned int NUMNICKLEN = 5;
 	/** Number of bits encoded in one numnick character. */
 	static const unsigned int NUMNICKLOG = 6;
-	/** Bitmask to select value of next numnick character. */
-	static const unsigned int NUMNICKMASK = 63;          /* (NUMNICKBASE-1) */
-	/** Number of servers representable in a numnick. */
-	static const unsigned int NN_MAX_SERVER = 4096;      /* (NUMNICKBASE * NUMNICKBASE) */
-	/** Number of clients representable in a numnick. */
-	static const unsigned int NN_MAX_CLIENT = 262144;    /* NUMNICKBASE ^ 3 */
-
-	struct irc_in_addr {
-		unsigned short in6_16[8]; /**< IPv6 encoded parts, little-endian. */
-	};
 	static const unsigned int convert2n[];
 
-	/** Convert a string to its value as a numnick.
-	 * @param[in] s Numnick string to decode.
-	 * @return %Numeric nickname value.
-	 */
-	static unsigned int base64toint(const char* s)
-	{
-	  unsigned int i = convert2n[(unsigned char) *s++];
-	  while (*s) {
-	    i <<= NUMNICKLOG;
-	    i += convert2n[(unsigned char) *s++];
-	  }
-	  return i;
-	}
-
-	/** Decode an IP address from base64.
-	 * @param[in] input Input buffer to decode.
-	 * @param[out] addr IP address structure to populate.
-	 */
-	static void base64toip(const char* input, struct irc_in_addr* addr)
-	{
-	  memset(addr, 0, sizeof(*addr));
-	  if (strlen(input) == 6) {
-	    unsigned int in = base64toint(input);
-	    /* An all-zero address should stay that way. */
-	    if (in) {
-	      addr->in6_16[5] = htons(65535);
-	      addr->in6_16[6] = htons(in >> 16);
-	      addr->in6_16[7] = htons(in & 65535);
-	    }
-	  } else {
-	    unsigned int pos = 0;
-	    do {
-	      if (*input == '_') {
-		unsigned int left;
-		for (left = (25 - strlen(input)) / 3 - pos; left; left--)
-		  addr->in6_16[pos++] = 0;
-		input++;
-	      } else {
-		unsigned short accum = convert2n[(unsigned char)*input++];
-		accum = (accum << NUMNICKLOG) | convert2n[(unsigned char)*input++];
-		accum = (accum << NUMNICKLOG) | convert2n[(unsigned char)*input++];
-		addr->in6_16[pos++] = ntohs(accum);
-	      }
-	    } while (pos < 8);
-	  }
-	}
-
-#define irc_in_addr_is_ipv4(ADDR) (!(ADDR)->in6_16[0] && !(ADDR)->in6_16[1] && !(ADDR)->in6_16[2] \
-					   && !(ADDR)->in6_16[3] && !(ADDR)->in6_16[4] \
-					   && ((!(ADDR)->in6_16[5] && (ADDR)->in6_16[6]) \
-					       || (ADDR)->in6_16[5] == 65535))
-	/*
-	 * this new faster inet_ntoa was ripped from:
-	 * From: Thomas Helvey <tomh@inxpress.net>
-	 */
-	/** Array of text strings for dotted quads. */
-	static const char* IpQuadTab[];
-	/** Convert an IP address to printable ASCII form.
-	 * @param[in] in Address to format.
-	 * @return the IP in printable form
-	 */
-	static Anope::string ircd_ntoa_r(const struct irc_in_addr* in)
-	{
-	    static char buf[40];
-	    if (irc_in_addr_is_ipv4(in)) {
-	      unsigned int pos, len;
-	      unsigned char *pch;
-
-	      pch = (unsigned char*)&in->in6_16[6];
-	      len = strlen(IpQuadTab[*pch]);
-	      memcpy(buf, IpQuadTab[*pch++], len);
-	      pos = len;
-	      buf[pos++] = '.';
-	      len = strlen(IpQuadTab[*pch]);
-	      memcpy(buf+pos, IpQuadTab[*pch++], len);
-	      pos += len;
-	      buf[pos++] = '.';
-	      len = strlen(IpQuadTab[*pch]);
-	      memcpy(buf+pos, IpQuadTab[*pch++], len);
-	      pos += len;
-	      buf[pos++] = '.';
-	      len = strlen(IpQuadTab[*pch]);
-	      memcpy(buf+pos, IpQuadTab[*pch++], len);
-	      buf[pos + len] = '\0';
-	      return buf;
-	    } else {
-	      static const char hexdigits[] = "0123456789abcdef";
-	      unsigned int pos, part, max_start, max_zeros, curr_zeros, ii;
-
-	      /* Find longest run of zeros. */
-	      for (max_start = ii = 1, max_zeros = curr_zeros = 0; ii < 8; ++ii) {
-		if (!in->in6_16[ii])
-		  curr_zeros++;
-		else if (curr_zeros > max_zeros) {
-		  max_start = ii - curr_zeros;
-		  max_zeros = curr_zeros;
-		  curr_zeros = 0;
-		}
-	      }
-	      if (curr_zeros > max_zeros) {
-		max_start = ii - curr_zeros;
-		max_zeros = curr_zeros;
-	      }
-
-	      /* Print out address. */
-	/** Append \a CH to the output buffer. */
-#define APPEND(CH) do { buf[pos++] = (CH); } while (0)
-	      for (pos = ii = 0; (ii < 8); ++ii) {
-		if ((max_zeros > 0) && (ii == max_start)) {
-		  APPEND(':');
-		  ii += max_zeros - 1;
-		  continue;
-		}
-		part = ntohs(in->in6_16[ii]);
-		if (part >= 0x1000)
-		  APPEND(hexdigits[part >> 12]);
-		if (part >= 0x100)
-		  APPEND(hexdigits[(part >> 8) & 15]);
-		if (part >= 0x10)
-		  APPEND(hexdigits[(part >> 4) & 15]);
-		APPEND(hexdigits[part & 15]);
-		if (ii < 7)
-		  APPEND(':');
-	      }
-#undef APPEND
-
-	      /* Nul terminate and return number of characters used. */
-	      buf[pos++] = '\0';
-	      return buf;
-	    }
-	}
-
 public:
-	/** Decode an IP address from base64 to printable.
-	 * @param[in] input Input buffer to decode.
-	 * @param[out] buf buffer for output
-	 */
-	static Anope::string base64toprintableip(const char *input)
+	static Anope::string DecodeIP(const Anope::string &encoded)
 	{
-	  struct irc_in_addr addr;
+		const unsigned char *input = reinterpret_cast<const unsigned char *>(encoded.c_str());
+		size_t insz = encoded.length();
+		sockaddrs sa;
 
-	  base64toip(input, &addr);
+		if (encoded.length() == 6)
+		{
+			uint32_t i = convert2n[*input++];
+			while (*input)
+			{
+				i <<= NUMNICKLOG;
+				i += convert2n[*input++];
+			}
 
-	  return ircd_ntoa_r(&addr);
+			struct in_addr addr;
+			addr.s_addr = htonl(i);
+
+			sa.ntop(AF_INET, &addr);
+		}
+		else
+		{
+			unsigned int pos = 0;
+			uint16_t in6_16[8];
+
+			do
+			{
+				if (*input == '_')
+				{
+					unsigned int left;
+					for (left = (25 - insz) / 3 - pos; left && pos < 8; left--)
+						in6_16[pos++] = 0;
+
+					input++;
+					--insz;
+				}
+				else
+				{
+					unsigned short accum = convert2n[*input++];
+					accum = (accum << NUMNICKLOG) | convert2n[*input++];
+					accum = (accum << NUMNICKLOG) | convert2n[*input++];
+					in6_16[pos++] = ntohs(accum);
+
+					insz -= 3;
+				}
+			}
+			while (pos < 8);
+
+			struct in6_addr addr;
+			memcpy(addr.s6_addr, in6_16, sizeof(addr.s6_addr));
+
+			sa.ntop(AF_INET6, &addr);
+		}
+
+		return sa.addr();
 	}
 
 	/*** END OF IRCU CODE ***/
@@ -538,15 +420,16 @@ public:
 		UplinkSocket::Message(u) << "N " << newnick << " " << Anope::CurTime;
 	}
 };
+
 const unsigned int IRCuProto::convert2n[] = {
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  52,53,54,55,56,57,58,59,60,61, 0, 0, 0, 0, 0, 0,
-   0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,
-  15,16,17,18,19,20,21,22,23,24,25,62, 0,63, 0, 0,
-   0,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,
-  41,42,43,44,45,46,47,48,49,50,51, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16-31
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 32-47
+  52,53,54,55,56,57,58,59,60,61, 0, 0, 0, 0, 0, 0, // 48-63
+   0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14, // 64-79
+  15,16,17,18,19,20,21,22,23,24,25,62, 0,63, 0, 0, // 80-95
+   0,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40, // 96-111
+  41,42,43,44,45,46,47,48,49,50,51, 0, 0, 0, 0, 0, // 112-127
 
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -556,34 +439,6 @@ const unsigned int IRCuProto::convert2n[] = {
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-const char* IRCuProto::IpQuadTab[] = {
-    "0",   "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8",   "9",
-   "10",  "11",  "12",  "13",  "14",  "15",  "16",  "17",  "18",  "19",
-   "20",  "21",  "22",  "23",  "24",  "25",  "26",  "27",  "28",  "29",
-   "30",  "31",  "32",  "33",  "34",  "35",  "36",  "37",  "38",  "39",
-   "40",  "41",  "42",  "43",  "44",  "45",  "46",  "47",  "48",  "49",
-   "50",  "51",  "52",  "53",  "54",  "55",  "56",  "57",  "58",  "59",
-   "60",  "61",  "62",  "63",  "64",  "65",  "66",  "67",  "68",  "69",
-   "70",  "71",  "72",  "73",  "74",  "75",  "76",  "77",  "78",  "79",
-   "80",  "81",  "82",  "83",  "84",  "85",  "86",  "87",  "88",  "89",
-   "90",  "91",  "92",  "93",  "94",  "95",  "96",  "97",  "98",  "99",
-  "100", "101", "102", "103", "104", "105", "106", "107", "108", "109",
-  "110", "111", "112", "113", "114", "115", "116", "117", "118", "119",
-  "120", "121", "122", "123", "124", "125", "126", "127", "128", "129",
-  "130", "131", "132", "133", "134", "135", "136", "137", "138", "139",
-  "140", "141", "142", "143", "144", "145", "146", "147", "148", "149",
-  "150", "151", "152", "153", "154", "155", "156", "157", "158", "159",
-  "160", "161", "162", "163", "164", "165", "166", "167", "168", "169",
-  "170", "171", "172", "173", "174", "175", "176", "177", "178", "179",
-  "180", "181", "182", "183", "184", "185", "186", "187", "188", "189",
-  "190", "191", "192", "193", "194", "195", "196", "197", "198", "199",
-  "200", "201", "202", "203", "204", "205", "206", "207", "208", "209",
-  "210", "211", "212", "213", "214", "215", "216", "217", "218", "219",
-  "220", "221", "222", "223", "224", "225", "226", "227", "228", "229",
-  "230", "231", "232", "233", "234", "235", "236", "237", "238", "239",
-  "240", "241", "242", "243", "244", "245", "246", "247", "248", "249",
-  "250", "251", "252", "253", "254", "255"
 };
 
 struct IRCDMessageServer : IRCDMessage
@@ -639,9 +494,7 @@ struct IRCDMessageNick : IRCDMessage
 			if (ip == '_')
 				ip.clear();
 			else
-			{
-				ip = IRCuProto::base64toprintableip(ip.c_str());
-			}
+				ip = IRCuProto::DecodeIP(ip);
 
 			User::OnIntroduce(params[0], params[3], params[4], "", ip,
 					source.GetServer(), params[params.size() - 1],
