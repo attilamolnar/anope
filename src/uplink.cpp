@@ -195,14 +195,7 @@ UplinkSocket::Message::~Message()
 		return;
 	}
 
-	if (!message_source.empty())
-	{
-		UplinkSock->Write(/*":" + */message_source + " " + this->buffer.str());
-		Log(LOG_RAWIO) << "Sent: " << message_source << " " << this->buffer.str();
-	}
-	else
-	{
-		UplinkSock->Write(this->buffer.str());
-		Log(LOG_RAWIO) << "Sent: " << this->buffer.str();
-	}
+	Anope::string sent = IRCD->Format(message_source, this->buffer.str());
+	UplinkSock->Write(sent);
+	Log(LOG_RAWIO) << "Sent: " << sent;
 }

@@ -41,6 +41,7 @@ class CoreExport IRCDProto : public Service
 
 	const Anope::string &GetProtocolName();
 	virtual void Parse(const Anope::string &, Anope::string &, Anope::string &, std::vector<Anope::string> &);
+	virtual Anope::string Format(const Anope::string &source, const Anope::string &message);
 
 	/* Modes used by default by our clients */
 	Anope::string DefaultPseudoclientModes;

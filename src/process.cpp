@@ -100,3 +100,11 @@ void IRCDProto::Parse(const Anope::string &buffer, Anope::string &source, Anope:
 	}
 }
 
+Anope::string IRCDProto::Format(const Anope::string &source, const Anope::string &message)
+{
+	if (!source.empty())
+		return ":" + source + " " + message;
+	else
+		return message;
+}
+

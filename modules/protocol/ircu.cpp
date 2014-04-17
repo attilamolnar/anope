@@ -282,6 +282,14 @@ public:
 		}
 	}
 
+	Anope::string Format(const Anope::string &source, const Anope::string &message) anope_override
+	{
+		if (!source.empty())
+			return source + " " + message;
+		else
+			return message;
+	}
+
 	void SendServer(const Server *server) anope_override
 	{
 		if (server != Me)
