@@ -399,10 +399,7 @@ public:
 	{
 		UplinkSocket::Message(Me) << "AC " << u->GetUID() << " " << na->nc->display;
 		if (u->HasMode("CLOAK"))
-		{
-			Log() << "MOOOOOOOOOOOOOOOOOOOOOOOOO!";
 			u->SetCloakedHost(na->nc->display + "." + cloak_suffix);
-		}
 	}
 
 	void SendLogout(User *u) anope_override
