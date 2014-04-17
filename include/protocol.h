@@ -40,6 +40,8 @@ class CoreExport IRCDProto : public Service
 	virtual void SendNumericInternal(int numeric, const Anope::string &dest, const Anope::string &buf);
 
 	const Anope::string &GetProtocolName();
+	virtual void Parse(const Anope::string &, Anope::string &, Anope::string &, std::vector<Anope::string> &);
+
 	/* Modes used by default by our clients */
 	Anope::string DefaultPseudoclientModes;
 	/* Can we force change a users's nick? */
@@ -68,8 +70,6 @@ class CoreExport IRCDProto : public Service
 	unsigned MaxModes;
 	/* The maximum number of bytes a line may have */
 	unsigned MaxLine;
-	/* If true, RFC1459 parsing is used for all lines. */
-	bool RFC1459Lines;
 
 	/* Retrieves the next free UID or SID */
 	virtual Anope::string UID_Retrieve();

@@ -207,7 +207,6 @@ public:
 		CanSQLineChannel = true; /* GLINE #channel */
 		RequiresID = true;
 		MaxModes = 6;
-		RFC1459Lines = false;
 		use_oplevels = true;
 	}
 
@@ -255,6 +254,32 @@ public:
 		while (Server::Find(current_sid) != NULL);
 
 		return current_sid;
+	}
+
+	void Parse(const Anope::string &buffer, Anope::string &source, Anope::string &command, std::vector<Anope::string> &params) anope_override
+	{
+		/* If the uplink hasn't introduced itself to us yet we use the RFC1459 parser */
+		if (!Me || Me->GetLinks().empty())
+			return IRCDProto::Parse(buffer, source, command, params);
+
+		spacesepstream sep(buffer);
+
+		sep.GetToken(source);
+		sep.GetToken(command);
+	
+		for (Anope::string token; sep.GetToken(token);)
+		{
+			if (token[0] == ':')
+			{
+				if (!sep.StreamEnd())
+					params.push_back(token.substr(1) + " " + sep.GetRemaining());
+				else
+					params.push_back(token.substr(1));
+				break;
+			}
+			else
+				params.push_back(token);
+		}
 	}
 
 	void SendServer(const Server *server) anope_override
@@ -382,7 +407,7 @@ public:
 		/* We need to do something like SJOIN with hybrid to "burst
 		 * onto" the channel.
 		 */
-		UplinkSocket::Message(Me) << "B " << c->name << " " << c->creation_time << " "
+		UplinkSocket::Message(Me) << "B " << c->name << " " << c->creation_time <<
 			" " << user->GetUID() << (statusstr == ":" ? "" : statusstr);
 
 		if (status != NULL)
