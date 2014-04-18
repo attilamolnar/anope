@@ -209,7 +209,7 @@ void Message::Mode::Run(MessageSource &source, const std::vector<Anope::string> 
 {
 	Anope::string buf;
 	for (unsigned i = 1; i < params.size(); ++i)
-		buf += " " + params[1];
+		buf += " " + params[i];
 
 	if (IRCD->IsChannelValid(params[0]))
 	{
