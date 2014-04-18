@@ -731,6 +731,8 @@ struct IRCDMessageClearModes : IRCDMessage
 
 struct IRCDMessageCreate : IRCDMessage
 {
+	static const unsigned TS_LAG_TIME = 86400;
+
 	IRCDMessageCreate(Module *creator) : IRCDMessage(creator, "C", 2) { SetFlag(IRCDMESSAGE_REQUIRE_USER); }
 
 	/* ABAAA C #channel 1234567890 */
@@ -740,7 +742,7 @@ struct IRCDMessageCreate : IRCDMessage
 		User *u = source.GetUser();
 		time_t ts;
 		commasepstream sep(params[0]);
-		std::list<Message::Join::SJoinUser> sjusers; // XXX is this really correct here?
+		std::list<Message::Join::SJoinUser> sjusers;
 
 		try
 		{
@@ -763,7 +765,7 @@ struct IRCDMessageCreate : IRCDMessage
 				if (c->FindUser(u) != NULL)
 					continue;
 
-				if (Anope::CurTime - ts > 86400 ||
+				if (Anope::CurTime - ts > TS_LAG_TIME ||
 						(c->creation_time && ts > c->creation_time &&
 						 !(c->users.size() == 0 && !c->HasMode("APASS"))))
 				{
