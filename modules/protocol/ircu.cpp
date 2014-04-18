@@ -666,7 +666,12 @@ struct IRCDMessageWhois : Message::Whois
 		while (sep.GetToken(nick) && total++ < MAX_WHOIS)
 		{
 			std::vector<Anope::string> p;
-			p.push_back(nick);
+
+			User *u = User::Find(nick, true);
+			if (!u || u->server != Me)
+				p.push_back(nick);
+			else
+				p.push_back(u->GetUID());
 
 			Message::Whois::Run(source, p);
 		}
