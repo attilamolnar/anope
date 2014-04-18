@@ -701,7 +701,7 @@ struct IRCDMessageClearModes : IRCDMessage
 				case MODE_REGULAR:
 				case MODE_PARAM:
 				{
-					c->RemoveModeInternal(source, cm, "", false); // XXX overriding here?
+					c->RemoveModeInternal(source, cm);
 					break;
 				}
 				case MODE_LIST:
@@ -711,7 +711,7 @@ struct IRCDMessageClearModes : IRCDMessage
 					{
 						const Anope::string &mask = its.first->second;
 						++its.first;
-						c->RemoveModeInternal(source, cm, mask, false);
+						c->RemoveModeInternal(source, cm);
 					}
 					break;
 				}
