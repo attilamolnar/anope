@@ -711,7 +711,7 @@ struct IRCDMessageClearModes : IRCDMessage
 					{
 						const Anope::string &mask = its.first->second;
 						++its.first;
-						c->RemoveModeInternal(source, cm);
+						c->RemoveModeInternal(source, cm, mask);
 					}
 					break;
 				}
