@@ -984,7 +984,6 @@ public:
 		 * The same applies to logging out -- there is no 
 		 * concept of logging out.
 		 */
-			return EVENT_STOP;
 		if (command->name == "nickserv/logout")
 			return EVENT_STOP;
 
@@ -998,18 +997,28 @@ public:
 
 		/* As per channels.c:sub1_from_channel, modes are cleared for zannels, unless
 		 * they have an apass.
+		 *
+		 * Remove +il as well unless they're mlocked to allow re-entry.
 		 */
 		ChannelMode *l = ModeManager::FindChannelModeByName("LIMIT");
 		ChannelMode *i = ModeManager::FindChannelModeByName("INVITE");
 		MessageSource ms = MessageSource(Me);
 
 		if (l != NULL)
-			c->RemoveModeInternal(ms, l, "", false);
+			c->RemoveModeInternal(ms, l);
 		if (i != NULL)
-			c->RemoveModeInternal(ms, i, "", false);
+			c->RemoveModeInternal(ms, i);
 
 		if (!c->HasMode("APASS"))
-			c->Reset();
+		{
+			for (std::multimap<Anope::string, Anope::string>::const_iterator it = c->GetModes().begin(), end = c->GetModes().end();
+					it != end;
+					++it)
+			{
+				ChannelMode *cm = ModeManager::FindChannelModeByName(it->first);
+				c->RemoveModeInternal(ms, cm);
+			}
+		}
 	}
 
 	EventReturn OnCheckDelete(Channel *c) anope_override
