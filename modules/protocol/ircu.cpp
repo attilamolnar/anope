@@ -209,12 +209,29 @@ public:
 		/* Pure realname bans are possible, but no combinations */
 		if (IsPureRealNameBan(x))
 		{
-			/* TODO */
+			/* XXX: I'm not sure, but I think this breaks if there
+			 * are spaces in the mask...
+			 */
+
+			/* GLINE_MAX_EXPIRE (7 days) does not expire to us as we
+			 * send the GL as server, giving the gline automatically
+			 * the GLINE_FORCE flag.
+			 *
+			 * We can't set permanent glines (expiry time 0 == instant
+			 * expiry); set a reasonable limit of 4 weeks there.
+			 */
+			UplinkSocket::Message(Me) << "GL * +$R" << x->GetReal()
+				<< " " << (!x->expires ? 2419200 : x->expires - Anope::CurTime)
+				<< " " << Anope::CurTime
+				<< " :" << x->GetReason();
 		}
 		/* user@host is the standard case*/
 		else if (!x->IsRegex() && !x->HasNickOrReal())
 		{
-			/* TODO */
+			UplinkSocket::Message(Me) << "GL * +" << x->GetUser() << "@" << x->GetHost()
+				<< " " << (!x->expires ? 2419200 : x->expires - Anope::CurTime)
+				<< " " << Anope::CurTime
+				<< " :" << x->GetReason();
 		}
 		/* Stuff we can't work with */
 		else
@@ -250,9 +267,15 @@ public:
 
 	void SendAkillDel(const XLine *x) anope_override
 	{
-		if (x == NULL || !IsPureRealNameBan(x) || x->IsRegex() || x->HasNickOrReal())
+		if (x == NULL || x->IsRegex() || (x->HasNickOrReal() && !IsPureRealNameBan(x)))
 			return;
-		/* TODO */
+
+		if (IsPureRealNameBan(x))
+			UplinkSocket::Message(Me) << "GL * -$R" << x->GetReal()
+				<< " " << Anope::CurTime;
+		else
+			UplinkSocket::Message(Me) << "GL * -" << x->GetUser() << "@" << x->GetHost()
+				<< " " << Anope::CurTime;
 	}
 
 	void SendClientIntroduction(User *u) anope_override
@@ -987,7 +1010,25 @@ public:
 		 * concept of logging out.
 		 */
 		if (command->name == "nickserv/logout")
+		{
+			source.Reply(_("You cannot log out. Please reconnect and authenticate for a different nick."));
 			return EVENT_STOP;
+		}
+
+		/* P10 has its own jupe system; working with it would require
+		 * adding a timer to check for expiry for jupes (because os_jupe
+		 * adds fake servers) as well as a mechanism to catch incoming
+		 * JU messages and deal with them.
+		 *
+		 * Tracking jupes and their expiry time would mean adding a
+		 * struct only for this protocol family, so we'll just tell
+		 * opers trying to jupe to use /JUPE like anyone else would.
+		 */
+		if (command->name == "operserv/jupe")
+		{
+			source.Reply(_("Please use /JUPE. Jupe request ignored."));
+			return EVENT_STOP;
+		}
 
 		return EVENT_CONTINUE;
 	}
