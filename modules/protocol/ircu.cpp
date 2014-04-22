@@ -174,7 +174,25 @@ public:
 	{
 		if (server != Me)
 		{
-			Log(LOG_DEBUG) << "Ignoring SendServer for server " << server->GetName() << " that is not me. Broken jupe code?";
+			/* This is a jupe.
+			 *
+			 * Anope doesn't have any of the mechanics required to
+			 * deal properly with P10 jupes, which have expiration
+			 * times and times of last modification, all of which
+			 * would require tracking to speak proper P10.
+			 *
+			 * Thus, for the time being, we do the same as other
+			 * services seem to do: Just send a jupe with an
+			 * arbitrary expiration time of one day.
+			 *
+			 * This means unjuping is not possible, as opers being
+			 * able to /JUPE requires a F:line (CONFIG_OPERCMDS)
+			 * that defaults to FALSE currently and there's no /os
+			 * unjupe and we can't currently track jupes internally.
+			 */
+			UplinkSocket::Message(Me) << "JU * +" << server->GetName() << " "
+				<< 86400 /* 1 day */ << " " << Anope::CurTime
+				<< " :" << server->GetDescription();
 			return;
 		}
 
@@ -1012,21 +1030,6 @@ public:
 		if (command->name == "nickserv/logout")
 		{
 			source.Reply(_("You cannot log out. Please reconnect and authenticate for a different nick."));
-			return EVENT_STOP;
-		}
-
-		/* P10 has its own jupe system; working with it would require
-		 * adding a timer to check for expiry for jupes (because os_jupe
-		 * adds fake servers) as well as a mechanism to catch incoming
-		 * JU messages and deal with them.
-		 *
-		 * Tracking jupes and their expiry time would mean adding a
-		 * struct only for this protocol family, so we'll just tell
-		 * opers trying to jupe to use /JUPE like anyone else would.
-		 */
-		if (command->name == "operserv/jupe")
-		{
-			source.Reply(_("Please use /JUPE. Jupe request ignored."));
 			return EVENT_STOP;
 		}
 
