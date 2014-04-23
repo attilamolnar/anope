@@ -85,7 +85,7 @@ public:
 		 * can only be manipulated via config directive Jupe {}.
 		 */
 		CanSQLineChannel = true; /* GLINE #channel */
-		RequiresID = true;
+		RequiresID = AmbiguousID = true;
 		MaxModes = 6;
 		use_oplevels = true;
 	}

@@ -67,6 +67,8 @@ class CoreExport IRCDProto : public Service
 	bool CanCertFP;
 	/* Whether this IRCd requires unique IDs for each user or server. See TS6/P10. */
 	bool RequiresID;
+	/* If this IRCd has unique ids, whether the IDs and nicknames are ambiguous */
+	bool AmbiguousID;
 	/* The maximum number of modes we are allowed to set with one MODE command */
 	unsigned MaxModes;
 	/* The maximum number of bytes a line may have */

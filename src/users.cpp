@@ -819,13 +819,14 @@ User* User::Find(const Anope::string &name, bool nick_only)
 		user_map::iterator it = UserListByUID.find(name);
 		if (it != UserListByUID.end())
 			return it->second;
+
+		if (IRCD->AmbiguousID)
+			return NULL;
 	}
-	else
-	{
-		user_map::iterator it = UserListByNick.find(name);
-		if (it != UserListByNick.end())
-			return it->second;
-	}
+
+	user_map::iterator it = UserListByNick.find(name);
+	if (it != UserListByNick.end())
+		return it->second;
 
 	return NULL;
 }

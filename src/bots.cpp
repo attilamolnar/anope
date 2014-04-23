@@ -247,23 +247,28 @@ CommandInfo *BotInfo::GetCommand(const Anope::string &cname)
 
 BotInfo* BotInfo::Find(const Anope::string &nick, bool nick_only)
 {
-	BotInfo *bi = NULL;
 	if (!nick_only && IRCD != NULL && IRCD->RequiresID)
 	{
 		botinfo_map::iterator it = BotListByUID->find(nick);
 		if (it != BotListByUID->end())
-			bi = it->second;
+		{
+			BotInfo *bi = it->second;
+			bi->QueueUpdate();
+			return bi;
+		}
+
+		if (IRCD->AmbiguousID)
+			return NULL;
 	}
 
-	if (bi == NULL)
+	botinfo_map::iterator it = BotListByNick->find(nick);
+	if (it != BotListByNick->end())
 	{
-		botinfo_map::iterator it = BotListByNick->find(nick);
-		if (it != BotListByNick->end())
-			bi = it->second;
+		BotInfo *bi = it->second;
+		bi->QueueUpdate();
+		return bi;
 	}
 
-	if (bi)
-		bi->QueueUpdate();
-	return bi;
+	return NULL;
 }
 
