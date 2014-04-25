@@ -95,7 +95,7 @@ Server::Server(Server *up, const Anope::string &sname, unsigned shops, const Ano
 			{
 				User *u = it->second;
 
-				BotInfo *bi = BotInfo::Find(u->nick);
+				BotInfo *bi = BotInfo::Find(u->GetUID());
 				if (bi)
 				{
 					XLine x(bi->nick, "Reserved for services");

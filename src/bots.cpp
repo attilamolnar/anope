@@ -95,7 +95,7 @@ Serializable* BotInfo::Unserialize(Serializable *obj, Serialize::Data &data)
 	BotInfo *bi;
 	if (obj)
 		bi = anope_dynamic_static_cast<BotInfo *>(obj);
-	else if (!(bi = BotInfo::Find(nick)))
+	else if (!(bi = BotInfo::Find(nick, true)))
 		bi = new BotInfo(nick, user, host, realname);
 
 	data["created"] >> bi->created;
