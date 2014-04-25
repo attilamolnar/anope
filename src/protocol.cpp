@@ -78,7 +78,7 @@ Anope::string IRCDProto::SID_Retrieve()
 	if (!IRCD || !IRCD->RequiresID)
 		return "";
 
-	static Anope::string current_sid = Config->GetBlock("options")->Get<const Anope::string>("id");
+	static Anope::string current_sid = Config->GetBlock("serverinfo")->Get<const Anope::string>("id");
 	if (current_sid.empty())
 		current_sid = "00A";
 
@@ -323,7 +323,7 @@ void IRCDProto::SendNickChange(User *u, const Anope::string &newnick)
 
 void IRCDProto::SendForceNickChange(User *u, const Anope::string &newnick, time_t when)
 {
-	UplinkSocket::Message() << "SVSNICK " << u->nick << " " << newnick << " " << when;
+	UplinkSocket::Message() << "SVSNICK " << u->GetUID() << " " << newnick << " " << when;
 }
 
 void IRCDProto::SendCTCP(const MessageSource &source, const Anope::string &dest, const char *fmt, ...)
