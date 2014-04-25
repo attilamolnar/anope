@@ -351,6 +351,12 @@ public:
 
 	void SendLogin(User *u, NickAlias *na) anope_override
 	{
+		if (u->Account())
+		{
+			Log(LOG_DEBUG) << "SendLogin for " << u->GetUID() << " as " << na->nc->display << " while already logged in as " << u->Account()->display;
+			return;
+		}
+
 		UplinkSocket::Message(Me) << "AC " << u->GetUID() << " " << na->nc->display;
 	}
 
@@ -376,7 +382,7 @@ public:
 
 	void SendModeInternal(const MessageSource &source, const Channel *dest, const Anope::string &buf) anope_override
 	{
-		if (dest->ci && dest->ci->bi)
+		if (dest->ci && dest->ci->bi && dest->FindUser(dest->ci->bi))
 			UplinkSocket::Message(*dest->ci->bi) << "M " << dest->name << " " << buf;
 		else
 			UplinkSocket::Message(Me) << "M " << dest->name << " " << buf;
@@ -389,7 +395,7 @@ public:
 
 	void SendKickInternal(const MessageSource &source, const Channel *c, User *u, const Anope::string &r) anope_override
 	{
-		if (c->ci && c->ci->bi)
+		if (c->ci && c->ci->bi && c->FindUser(c->ci->bi))
 			UplinkSocket::Message(*c->ci->bi) << "K " << c->name << " " << u->GetUID() << " :"
 				<< (r.empty() ? "" : r);
 		else
@@ -784,7 +790,6 @@ struct IRCDMessageCreate : IRCDMessage
 		User *u = source.GetUser();
 		time_t ts;
 		commasepstream sep(params[0]);
-		std::list<Message::Join::SJoinUser> sjusers;
 
 		try
 		{
@@ -821,6 +826,7 @@ struct IRCDMessageCreate : IRCDMessage
 				cus.AddMode('o');
 
 			c->creation_time = ts;
+			std::list<Message::Join::SJoinUser> sjusers;
 			sjusers.push_back(std::make_pair(cus, u));
 			Message::Join::SJoin(source, cname, ts, "", sjusers);
 		}
