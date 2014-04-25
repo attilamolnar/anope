@@ -319,10 +319,12 @@ void Privmsg::Run(MessageSource &source, const std::vector<Anope::string> &param
 		 * us, and strip it off. */
 		Anope::string botname = receiver;
 		size_t s = receiver.find('@');
+		bool nick_only = false;
 		if (s != Anope::string::npos)
 		{
 			Anope::string servername(receiver.begin() + s + 1, receiver.end());
 			botname = botname.substr(0, s);
+			nick_only = true;
 			if (!servername.equals_ci(Me->GetName()))
 				return;
 		}
@@ -336,7 +338,7 @@ void Privmsg::Run(MessageSource &source, const std::vector<Anope::string> &param
 			return;
 		}
 
-		BotInfo *bi = BotInfo::Find(botname);
+		BotInfo *bi = BotInfo::Find(botname, nick_only);
 
 		if (bi)
 		{
