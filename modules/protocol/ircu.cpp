@@ -80,11 +80,9 @@ public:
 	IRCuProto(Module *creator) : IRCDProto(creator, "IRCu 2.10.12+")
 	{
 		DefaultPseudoclientModes = "+oik";
-		CanSNLine = true; /* GLINE $R */
 		/* Nick SQLine handling is actually in the IRCd, but the list
 		 * can only be manipulated via config directive Jupe {}.
 		 */
-		CanSQLineChannel = true; /* GLINE #channel */
 		RequiresID = AmbiguousID = true;
 		MaxModes = 6;
 		use_oplevels = true;
@@ -324,14 +322,17 @@ public:
 		Anope::string statusstr = ":";
 
 		/* Order must be kept or the parser on the other side might choke */
-		if (status != NULL && status->HasMode('v'))
-			statusstr += 'v';
-		else if (status != NULL && status->HasMode('o'))
-			/* ircu really loves their oplevels and uses them even
-			 * if FEAT_OPLEVELS == FALSE; 'o' == 999, but services
-			 * will want creator status.
-			 */
-			statusstr += use_oplevels ? '0' : 'o';
+		if (status != NULL)
+		{
+			if (status->HasMode('v'))
+				statusstr += 'v';
+			if (status->HasMode('o'))
+				/* ircu really loves their oplevels and uses them even
+				 * if FEAT_OPLEVELS == FALSE; 'o' == 999, but services
+				 * will want creator status.
+				 */
+				statusstr += use_oplevels ? '0' : 'o';
+		}
 
 		/* We need to do something like SJOIN with hybrid to "burst
 		 * onto" the channel.
