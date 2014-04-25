@@ -809,9 +809,6 @@ struct IRCDMessageCreate : IRCDMessage
 
 			if (!created)
 			{
-				if (c->FindUser(u) != NULL)
-					continue;
-
 				if (Anope::CurTime - ts > TS_LAG_TIME ||
 						(c->creation_time && ts > c->creation_time &&
 						 !(c->users.size() == 0 && !c->HasMode("APASS"))))
@@ -840,10 +837,10 @@ struct IRCDMessageDestruct : IRCDMessage
 	void Run(MessageSource &source, const std::vector<Anope::string> &params) anope_override
 	{
 		time_t ts = convertTo<time_t>(params[1]);
-		Channel *c;
+		Channel *c = Channel::Find(params[0]);
 		Anope::string delmodestr;
 
-		if ((c = Channel::Find(params[0])) == NULL)
+		if (c == NULL)
 			return;
 
 		if (ts > c->creation_time)
