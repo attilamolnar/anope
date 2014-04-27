@@ -83,7 +83,7 @@ public:
 		/* Nick SQLine handling is actually in the IRCd, but the list
 		 * can only be manipulated via config directive Jupe {}.
 		 */
-		RequiresID = AmbiguousID = true;
+		RequiresID = AmbiguousID = CanSQLine = CanSQLineChannel = true;
 		MaxModes = 6;
 		use_oplevels = true;
 	}
@@ -292,6 +292,29 @@ public:
 		else
 			UplinkSocket::Message(Me) << "GL * -" << x->GetUser() << "@" << x->GetHost()
 				<< " " << Anope::CurTime;
+	}
+
+	void SendSQLine(User *u, const XLine *x) anope_override
+	{
+		/* We have to say CanSQLine to get the channel SQLines.
+		 * However, Anope doesn't care and sends us nick SQLines anyway.
+		 */
+		if (x->mask[0] != '#' && x->mask[0] != '&')
+			return;
+
+		UplinkSocket::Message(Me) << "GL * +" << x->mask
+			/* Hold perm SQLines for four weeks */
+			<< " " << (!x->expires ? 2419200 : x->expires - Anope::CurTime)
+			<< " " << Anope::CurTime
+			<< " :" << x->reason;
+	}
+
+	void SendSQLineDel(const XLine *x) anope_override
+	{
+		if (x->mask[0] != '#' && x->mask[0] != '&')
+			return;
+
+		UplinkSocket::Message(Me) << "GL * -" << x->mask << " " << Anope::CurTime;
 	}
 
 	void SendClientIntroduction(User *u) anope_override
