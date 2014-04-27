@@ -530,23 +530,25 @@ struct IRCDMessageNick : IRCDMessage
 		else if (params.size() >= 8 && source.GetServer() != NULL)
 		{
 			Anope::string umodes;
-			Anope::string accname;
 			Anope::string ip = params[params.size() - 3];
 			NickCore *nc = NULL;
 
 			/* umodes are optional! */
 			if (params.size() >= 8)
-				umodes = params[5];
-			if (!umodes.empty() && umodes.find('r') != Anope::string::npos)
 			{
-				accname = params[6];
+				umodes = params[5];
 
-				/* If it's a timestamped account, truncate. */
-				size_t pos = umodes.find(':');
-				if (pos != Anope::string::npos)
-					accname = accname.substr(0, pos - 1);
+				if (umodes.find('r') != Anope::string::npos)
+				{
+					Anope::string accname = params[6];
 
-				nc = NickCore::Find(accname);
+					/* If it's a timestamped account, truncate. */
+					size_t pos = umodes.find(':');
+					if (pos != Anope::string::npos)
+						accname = accname.substr(0, pos);
+
+					nc = NickCore::Find(accname);
+				}
 			}
 
 			if (ip == '_')
