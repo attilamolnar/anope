@@ -839,6 +839,7 @@ struct IRCDMessageCreate : IRCDMessage
 				{
 					if (u->server->IsSynced() || ts > c->creation_time + 4)
 						badop = true;
+					c->Reset();
 				}
 
 				c->creation_time = ts;
