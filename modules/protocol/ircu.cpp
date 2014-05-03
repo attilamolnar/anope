@@ -829,10 +829,9 @@ struct IRCDMessageCreate : IRCDMessage
 		{
 			bool badop = false;
 
-			bool created;
-			Channel *c = Channel::FindOrCreate(cname, created, ts);
+			Channel *c = Channel::Find(cname);
 
-			if (!created)
+			if (c)
 			{
 				if (Anope::CurTime - ts > TS_LAG_TIME ||
 						(c->creation_time && ts > c->creation_time &&
@@ -841,13 +840,14 @@ struct IRCDMessageCreate : IRCDMessage
 					if (u->server->IsSynced() || ts > c->creation_time + 4)
 						badop = true;
 				}
+
+				c->creation_time = ts;
 			}
 
 			ChannelStatus cus;
 			if (!badop)
 				cus.AddMode('o');
 
-			c->creation_time = ts;
 			std::list<Message::Join::SJoinUser> sjusers;
 			sjusers.push_back(std::make_pair(cus, u));
 			Message::Join::SJoin(source, cname, ts, "", sjusers);
