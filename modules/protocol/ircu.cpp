@@ -1086,7 +1086,8 @@ public:
 
 		if (!c->HasMode("APASS"))
 		{
-			for (std::multimap<Anope::string, Anope::string>::const_iterator it = c->GetModes().begin(), end = c->GetModes().end();
+			Channel::ModeList ml = c->GetModes();
+			for (std::multimap<Anope::string, Anope::string>::const_iterator it = ml.begin(), end = ml.end();
 					it != end;
 					++it)
 			{
