@@ -805,6 +805,8 @@ struct IRCDMessageClearModes : IRCDMessage
 struct IRCDMessageCreate : IRCDMessage
 {
 	static const unsigned TS_LAG_TIME = 86400;
+	/* Some magic constant used in m_create.c to make minor TS deltas be ignored */
+	static const unsigned MINOR_TS_DELTA = 4;
 
 	IRCDMessageCreate(Module *creator) : IRCDMessage(creator, "C", 2) { SetFlag(IRCDMESSAGE_REQUIRE_USER); }
 
@@ -837,7 +839,8 @@ struct IRCDMessageCreate : IRCDMessage
 						(c->creation_time && ts > c->creation_time &&
 						 !(c->users.size() == 0 && !c->HasMode("APASS"))))
 				{
-					if (u->server->IsSynced() || ts > c->creation_time + 4)
+					if (u->server->IsSynced()
+							|| ts > c->creation_time + MINOR_TS_DELTA)
 						badop = true;
 					c->Reset();
 				}
