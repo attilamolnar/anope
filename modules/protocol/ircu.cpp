@@ -923,12 +923,13 @@ class ProtoIRCu : public Module
 	IRCDMessageWhois message_whois;
 	IRCDMessageClearModes message_clearmodes;
 	IRCDMessageCreate message_create;
+	IRCDMessageDestruct message_destruct;
 	IRCDMessageEndOfBurst message_end_of_burst;
 
 	/* Non-token message handlers */
 	ServiceAlias alias_server, alias_nick, alias_burst, alias_whois,
-		     alias_clearmodes, alias_create, alias_end_of_burst,
-		     alias_opmode,
+		     alias_clearmodes, alias_create, alias_destruct,
+		     alias_end_of_burst, alias_opmode,
 
 		     alias_a, alias_y, alias_i, alias_j, alias_d, alias_mo,
 		     alias_o, alias_l, alias_g, alias_p, alias_q, alias_r,
@@ -1005,6 +1006,7 @@ public:
 		message_whois(this),
 		message_clearmodes(this),
 		message_create(this),
+		message_destruct(this),
 		message_end_of_burst(this),
 
 #define ALIAS(name, token) alias_##name("IRCDMessage", "ircu/" #name, "ircu/" #token)
@@ -1014,6 +1016,7 @@ public:
 		ALIAS(whois, w),
 		ALIAS(clearmodes, cm),
 		ALIAS(create, c),
+		ALIAS(destruct, de),
 		ALIAS(end_of_burst, eb),
 		ALIAS(opmode, m),
 
