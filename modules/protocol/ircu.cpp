@@ -898,6 +898,34 @@ struct IRCDMessageEndOfBurst : IRCDMessage
 	}
 };
 
+struct IRCDMessageKick : IRCDMessage
+{
+	IRCDMessageKick(Module *creator) : IRCDMessage(creator, "K", 2) { SetFlag(IRCDMESSAGE_SOFT_LIMIT); }
+
+	void Run(MessageSource &source, const std::vector<Anope::string> &params) anope_override
+	{
+		Channel *chan = Channel::Find(params[0]);
+		const Anope::string reason = params.size() > 2 ? params[2] : "";
+
+		commasepstream sep(params[1]);
+		for (Anope::string uid; sep.GetToken(uid); )
+		{
+			User *target = User::Find(uid);
+			if (!target)
+				continue;
+
+			if (target->server == Me)
+			{
+				// If our client is getting kicked send back a part to remove the zombie
+				UplinkSocket::Message(target) << "L " << params[0];
+			}
+
+			if (chan)
+				chan->KickInternal(source, uid, reason);
+		}
+	}
+};
+
 class ProtoIRCu : public Module
 {
 	IRCuProto ircd_proto;
@@ -929,6 +957,7 @@ class ProtoIRCu : public Module
 	IRCDMessageCreate message_create;
 	IRCDMessageDestruct message_destruct;
 	IRCDMessageEndOfBurst message_end_of_burst;
+	IRCDMessageKick message_kick;
 
 	/* Non-token message handlers */
 	ServiceAlias alias_server, alias_nick, alias_burst, alias_whois,
@@ -974,6 +1003,7 @@ public:
 		message_create(this),
 		message_destruct(this),
 		message_end_of_burst(this),
+		message_kick(this),
 
 #define ALIAS(name, token) alias_##name("IRCDMessage", "ircu/" #name, "ircu/" #token)
 		ALIAS(server, s),
