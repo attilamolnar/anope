@@ -144,7 +144,7 @@ public:
 
 		sep.GetToken(source);
 		sep.GetToken(command);
-	
+
 		for (Anope::string token; sep.GetToken(token);)
 		{
 			if (token[0] == ':')
@@ -938,7 +938,7 @@ class ProtoIRCu : public Module
 		     alias_a, alias_y, alias_i, alias_j, alias_d, alias_mo,
 		     alias_o, alias_l, alias_g, alias_p, alias_q, alias_r,
 		     alias_ti, alias_t, alias_v,
-		     
+
 		     /* true aliases */
 		     alias_om;
 
@@ -1060,7 +1060,7 @@ public:
 		/* ircu doesn't support changing account name and will
 		 * cry with protocol_violation() if we try. Immediately
 		 * stop any attempt to re-auth.
-		 * The same applies to logging out -- there is no 
+		 * The same applies to logging out -- there is no
 		 * concept of logging out.
 		 */
 		if (command->name == "nickserv/logout")
