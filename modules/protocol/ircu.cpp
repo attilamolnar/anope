@@ -960,7 +960,7 @@ class ProtoIRCu : public Module
 
 		/* CUS are only v/o */
 		ModeManager::AddChannelMode(new ChannelModeStatus("VOICE", 'v', '+', 0));
-		ModeManager::AddChannelMode(new ChannelModeStatus("OP", 'o', '@', 1));
+		ModeManager::AddChannelMode(new ChannelModeStatus("OP", 'o', '@', 2));
 
 		ModeManager::AddChannelMode(new ChannelModeParam("LIMIT", 'l', true));
 		ModeManager::AddChannelMode(new ChannelModeKey('k'));
