@@ -618,7 +618,7 @@ struct IRCDMessageBurst : IRCDMessage
 		return ret;
 	}
 
-	std::list<Message::Join::SJoinUser> ParseClientList(Anope::string nicklist)
+	std::list<Message::Join::SJoinUser> ParseClientList(const Anope::string &nicklist)
 	{
 		std::list<Message::Join::SJoinUser> users;
 		commasepstream sep(nicklist);
