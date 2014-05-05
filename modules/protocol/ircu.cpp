@@ -942,44 +942,6 @@ class ProtoIRCu : public Module
 		     /* true aliases */
 		     alias_om;
 
-	void AddModes()
-	{
-		/* Add user modes */
-		ModeManager::AddUserMode(new UserModeOperOnly("DEAF", 'd'));
-		ModeManager::AddUserMode(new UserModeOperOnly("DEBUG", 'g'));
-		ModeManager::AddUserMode(new UserMode("INVIS", 'i'));
-		ModeManager::AddUserMode(new UserModeNoone("PROTECTED", 'k'));
-		ModeManager::AddUserMode(new UserModeOperOnly("OPER", 'o'));
-		ModeManager::AddUserMode(new UserModeNoone("REGISTERED", 'r'));
-		ModeManager::AddUserMode(new UserModeOperOnly("SNOMASK", 's'));
-		ModeManager::AddUserMode(new UserMode("WALLOP", 'w'));
-		ModeManager::AddUserMode(new UserMode("CLOAK", 'x'));
-
-		/* No +eI supported */
-		ModeManager::AddChannelMode(new ChannelModeList("BAN", 'b'));
-
-		/* CUS are only v/o */
-		ModeManager::AddChannelMode(new ChannelModeStatus("VOICE", 'v', '+', 0));
-		ModeManager::AddChannelMode(new ChannelModeStatus("OP", 'o', '@', 2));
-
-		ModeManager::AddChannelMode(new ChannelModeParam("LIMIT", 'l', true));
-		ModeManager::AddChannelMode(new ChannelModeKey('k'));
-
-		ModeManager::AddChannelMode(new ChannelModeParam("APASS", 'A', true));
-		ModeManager::AddChannelMode(new ChannelModeParam("UPASS", 'U', true));
-
-		ModeManager::AddChannelMode(new ChannelMode("PRIVATE", 'p'));
-		ModeManager::AddChannelMode(new ChannelMode("SECRET", 's'));
-		ModeManager::AddChannelMode(new ChannelMode("MODERATED", 'm'));
-		ModeManager::AddChannelMode(new ChannelMode("TOPIC", 't'));
-		ModeManager::AddChannelMode(new ChannelMode("INVITE", 'i'));
-		ModeManager::AddChannelMode(new ChannelMode("NOEXTERNAL", 'n'));
-		ModeManager::AddChannelMode(new ChannelMode("REGISTEREDONLY", 'r'));
-		/* these modes are quite new; we'll need to externalize that for "base" P10 */
-		ModeManager::AddChannelMode(new ChannelMode("DELAYJOIN", 'D'));
-		ModeManager::AddChannelMode(new ChannelModeNoone("REGISTERED", 'R'));
-	}
-
 public:
 	Anope::string cloak_suffix;
 	bool use_zannels;
@@ -1043,8 +1005,40 @@ public:
 		ALIAS(om, m)
 #undef ALIAS
 	{
-		if (Config->GetModule(this))
-			this->AddModes();
+		/* Add user modes */
+		ModeManager::AddUserMode(new UserModeOperOnly("DEAF", 'd'));
+		ModeManager::AddUserMode(new UserModeOperOnly("DEBUG", 'g'));
+		ModeManager::AddUserMode(new UserMode("INVIS", 'i'));
+		ModeManager::AddUserMode(new UserModeNoone("PROTECTED", 'k'));
+		ModeManager::AddUserMode(new UserModeOperOnly("OPER", 'o'));
+		ModeManager::AddUserMode(new UserModeNoone("REGISTERED", 'r'));
+		ModeManager::AddUserMode(new UserModeOperOnly("SNOMASK", 's'));
+		ModeManager::AddUserMode(new UserMode("WALLOP", 'w'));
+		ModeManager::AddUserMode(new UserMode("CLOAK", 'x'));
+
+		/* No +eI supported */
+		ModeManager::AddChannelMode(new ChannelModeList("BAN", 'b'));
+
+		/* CUS are only v/o */
+		ModeManager::AddChannelMode(new ChannelModeStatus("VOICE", 'v', '+', 0));
+		ModeManager::AddChannelMode(new ChannelModeStatus("OP", 'o', '@', 2));
+
+		ModeManager::AddChannelMode(new ChannelModeParam("LIMIT", 'l', true));
+		ModeManager::AddChannelMode(new ChannelModeKey('k'));
+
+		ModeManager::AddChannelMode(new ChannelModeParam("APASS", 'A', true));
+		ModeManager::AddChannelMode(new ChannelModeParam("UPASS", 'U', true));
+
+		ModeManager::AddChannelMode(new ChannelMode("PRIVATE", 'p'));
+		ModeManager::AddChannelMode(new ChannelMode("SECRET", 's'));
+		ModeManager::AddChannelMode(new ChannelMode("MODERATED", 'm'));
+		ModeManager::AddChannelMode(new ChannelMode("TOPIC", 't'));
+		ModeManager::AddChannelMode(new ChannelMode("INVITE", 'i'));
+		ModeManager::AddChannelMode(new ChannelMode("NOEXTERNAL", 'n'));
+		ModeManager::AddChannelMode(new ChannelMode("REGISTEREDONLY", 'r'));
+		/* these modes are quite new; we'll need to externalize that for "base" P10 */
+		ModeManager::AddChannelMode(new ChannelMode("DELAYJOIN", 'D'));
+		ModeManager::AddChannelMode(new ChannelModeNoone("REGISTERED", 'R'));
 	}
 
 	EventReturn OnPreCommand(CommandSource &source, Command *command, std::vector<Anope::string> &params) anope_override
