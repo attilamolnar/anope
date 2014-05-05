@@ -1118,9 +1118,9 @@ public:
 
 	void OnReload(Configuration::Conf *conf) anope_override
 	{
-		use_zannels = conf->GetModule(this)->Get<bool>("use_zannels", "yes");
-		ircd_proto.use_oplevels = conf->GetModule(this)->Get<bool>("use_oplevels", "yes");
-		cloak_suffix = conf->GetModule(this)->Get<const Anope::string>("cloak_suffix");
+		use_zannels = conf->GetModule(ModuleManager::FindFirstOf(PROTOCOL))->Get<bool>("use_zannels", "yes");
+		ircd_proto.use_oplevels = conf->GetModule(ModuleManager::FindFirstOf(PROTOCOL))->Get<bool>("use_oplevels", "yes");
+		cloak_suffix = conf->GetModule(ModuleManager::FindFirstOf(PROTOCOL))->Get<const Anope::string>("cloak_suffix");
 		if (cloak_suffix.empty())
 			throw ConfigException(this->name + " cloak_suffix must not be empty.");
 	}
